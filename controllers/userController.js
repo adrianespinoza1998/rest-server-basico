@@ -1,26 +1,64 @@
 const { request,response } = require('express');
+const bcryptjs = require('bcryptjs');
 
-const usuariosGet = (req = request,res = response)=> {
+const Usuario = require('../models/usuario');
 
-    const { q, nombre='No name', apikey} = req.query;
-    res.status(201).json({msg:'Funca controlador get', q, nombre, apikey});
+
+const usuariosGet = async (req = request,res = response)=> {
+
+    const { limite = 5, desde = 0 } = req.query;
+    const [total, usuarios] = await Promise.all([
+        Usuario.countDocuments({ estado : true }),
+        Usuario.find({estado : true})
+            .skip(Number(desde))
+            .limit(Number(limite))
+    ]);
+
+    res.status(200).json({total, usuarios});
 }
 
-const usuariosPost = (req = request,res = response)=> {
+const usuariosPost = async(req = request,res = response)=> {
 
-    const { nombre, edad} = req.body
-    res.status(201).json({msg:'Funca controlador post', nombre, edad});
+    const {nombre,correo,password,role} = req.body
+    const usuario = new Usuario({ nombre, correo, password, role});
+
+    //Encriptar contraseña
+    const salt = bcryptjs.genSaltSync();
+    usuario.password = bcryptjs.hashSync(password, salt);
+
+    //Guardar en DB
+    await usuario.save();
+    //const { nombre, edad} = req.body
+    res.status(201).json({usuario});
 }
 
-const usuariosPut = (req = request,res = response)=> {
+const usuariosPut = async(req = request,res = response)=> {
 
     const id = req.params.id;
-    res.status(201).json({msg:'Funca controlador put', id});
+    const {_id, password, google, correo, ...resto} = req.body;
+
+    //TODO: Validar id en BD
+    if (password){
+        //Encriptar contraseña
+        const salt = bcryptjs.genSaltSync();
+        resto.password = bcryptjs.hashSync(password, salt);
+    }
+
+    const usuario = await Usuario.findByIdAndUpdate(id, resto);
+
+    console.log(usuario);
+
+    res.status(201).json({usuario});
 }
 
-const usuariosDelete = (req,res = response)=> {
+const usuariosDelete = async (req,res = response)=> {
 
-    res.status(201).json({msg:'Funca controlador delete'});
+    const {id} = req.params;
+
+    const usuario = await Usuario.findByIdAndUpdate(id,{ estado: false });
+    //const usuario = await Usuario.findByIdAndDelete(id);
+
+    res.status(201).json(usuario);
 }
 
 const usuariosPatch = (req,res = response)=> {
