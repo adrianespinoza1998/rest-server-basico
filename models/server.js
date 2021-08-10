@@ -22,7 +22,7 @@ class Server {
 
     middleware(){
         //Directorio público
-        //this.app.use( express.static('public'));
+        this.app.use( express.static('public'));
 
         //Habilitar CORS
         this.app.use(cors());
