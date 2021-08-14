@@ -54,11 +54,10 @@ const usuariosPut = async(req = request,res = response)=> {
 const usuariosDelete = async (req,res = response)=> {
 
     const {id} = req.params;
-
+    const usuarioVerificado = req.usuario;
     const usuario = await Usuario.findByIdAndUpdate(id,{ estado: false });
-    //const usuario = await Usuario.findByIdAndDelete(id);
 
-    res.status(201).json(usuario);
+    res.status(201).json({usuario, usuarioVerificado});
 }
 
 const usuariosPatch = (req,res = response)=> {
